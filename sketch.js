@@ -122,7 +122,7 @@ function keyTyped() {
 
 function enqueueMorse(codeStr) {
   for (const c of codeStr) symbolQueue.push(c);
-  // optional pause: symbolQueue.push('.');
+  symbolQueue.push('|');
 }
 
 // helpers
