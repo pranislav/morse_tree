@@ -3,10 +3,9 @@
 // . = left+straight, - = right+straight, | = all three
 // BFS queue: expands one tip per symbol (left→right)
 
-let branchAngle = 30;
+let branchAngle = 40;
 let lenDecay = 0.72;
-let thicknessDecay = 0.72;
-let stepEvery = 14;
+let thicknessDecay = 0.8;
 
 const MIN_LEN = 2.0;
 const MIN_W = 0.6;
@@ -42,9 +41,10 @@ function resetTree() {
 }
 
 function draw() {
+  // background(255);
 
   // expand one queued symbol per step
-  if (frameCount % stepEvery === 0 && symbolQueue.length > 0) {
+  if (symbolQueue.length > 0) {
     const sym = symbolQueue.shift();
     expandNextTip(sym);
   }
@@ -76,30 +76,127 @@ function draw() {
 
 function expandNextTip(symbol) {
   if (tipQueue.length === 0) return;
-  const b = tipQueue.shift(); // FIFO
 
-  const x2 = b.x + cos(b.angle) * b.len;
-  const y2 = b.y + sin(b.angle) * b.len;
-  segments.push({ x1: b.x, y1: b.y, x2, y2, w: b.w });
+  const b = tipQueue.shift();
+
+  // parent segment
+  const px2 = b.x + cos(b.angle) * b.len;
+  const py2 = b.y + sin(b.angle) * b.len;
+
+  const parentSeg = {
+    x1: b.x, y1: b.y,
+    x2: px2, y2: py2,
+    w: b.w
+  };
 
   const newLen = b.len * lenDecay;
-  const newW = b.w * thicknessDecay;
+  const newW   = b.w * thicknessDecay;
   if (newLen < MIN_LEN || newW < MIN_W) return;
 
+  // --- build children FIRST (nothing drawn yet) ---
+  const children = [];
+  function child(angle) {
+    return {
+      x1: px2,
+      y1: py2,
+      x2: px2 + cos(angle) * newLen,
+      y2: py2 + sin(angle) * newLen,
+      angle,
+      len: newLen,
+      w: newW
+    };
+  }
+
   if (symbol === '.') {
-    tipQueue.push(makeTip(x2, y2, b.angle - branchAngle, newLen, newW));
-    tipQueue.push(makeTip(x2, y2, b.angle, newLen, newW));
+    children.push(child(b.angle - branchAngle));
+    children.push(child(b.angle));
   } else if (symbol === '-') {
-    tipQueue.push(makeTip(x2, y2, b.angle + branchAngle, newLen, newW));
-    tipQueue.push(makeTip(x2, y2, b.angle, newLen, newW));
+    children.push(child(b.angle + branchAngle));
+    children.push(child(b.angle));
   } else if (symbol === '|') {
-    tipQueue.push(makeTip(x2, y2, b.angle - branchAngle, newLen, newW));
-    tipQueue.push(makeTip(x2, y2, b.angle, newLen, newW));
-    tipQueue.push(makeTip(x2, y2, b.angle + branchAngle, newLen, newW));
+    children.push(child(b.angle - branchAngle));
+    children.push(child(b.angle));
+    children.push(child(b.angle + branchAngle));
   } else {
-    tipQueue.push(makeTip(x2, y2, b.angle, newLen, newW));
+    children.push(child(b.angle));
+  }
+
+  // --- CLASH CHECK (atomic) ---
+  for (const c of children) {
+    if (clashesWithExisting(
+          c.x1, c.y1, c.x2, c.y2,
+          b.parent   // skip own parent
+        )) {
+      // parent dies, retry symbol on next tip
+      symbolQueue.unshift(symbol);
+      return;
+    }
+  }
+
+  // --- ACCEPT: draw parent, enqueue children ---
+  segments.push(parentSeg);
+
+  for (const c of children) {
+    tipQueue.push({
+      x: c.x1,
+      y: c.y1,
+      angle: c.angle,
+      len: c.len,
+      w: c.w,
+      parent: parentSeg
+    });
   }
 }
+
+function segmentsIntersect(a, b, c, d) {
+  function orient(p, q, r) {
+    return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+  }
+
+  function onSeg(p, q, r) {
+    return q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) &&
+           q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y);
+  }
+
+  const o1 = orient(a, b, c);
+  const o2 = orient(a, b, d);
+  const o3 = orient(c, d, a);
+  const o4 = orient(c, d, b);
+
+  if (o1 * o2 < 0 && o3 * o4 < 0) return true;
+
+  if (o1 === 0 && onSeg(a, c, b)) return true;
+  if (o2 === 0 && onSeg(a, d, b)) return true;
+  if (o3 === 0 && onSeg(c, a, d)) return true;
+  if (o4 === 0 && onSeg(c, b, d)) return true;
+
+  return false;
+}
+
+
+function clashesWithExisting(x1, y1, x2, y2, parent) {
+  const EPS = 1e-3;
+
+  for (const s of segments) {
+    // skip parent segment
+    if (s === parent) continue;
+
+    // ignore tiny overlaps at the joint
+    if (dist(x1, y1, s.x1, s.y1) < EPS ||
+        dist(x1, y1, s.x2, s.y2) < EPS) continue;
+
+    if (segmentsIntersect(
+      {x:x1, y:y1}, {x:x2, y:y2},
+      {x:s.x1, y:s.y1}, {x:s.x2, y:s.y2}
+    )) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
 
 function makeTip(x, y, angle, len, w) {
   return { x, y, angle, len, w };
