@@ -7,7 +7,7 @@ let branchAngle = 40;
 let lenDecay = 0.72;
 let thicknessDecay = 0.8;
 
-const MIN_LEN = 2.0;
+const MIN_LEN = 10.0;
 const MIN_W = 0.6;
 
 const MORSE = {
@@ -81,9 +81,8 @@ function expandNextTip(symbol) {
     w: b.w
   };
 
-  const newLen = b.len * lenDecay;
-  const newW   = b.w * thicknessDecay;
-  if (newLen < MIN_LEN || newW < MIN_W) return;
+  let newLen = max(b.len * lenDecay, MIN_LEN);
+  let newW   = max(b.w   * thicknessDecay, MIN_W);
 
   // --- build children FIRST (nothing drawn yet) ---
   const children = [];
