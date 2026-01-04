@@ -1,7 +1,7 @@
 // --- Morse Tree ---
 // type letters/digits/spaces to grow the tree
 // . = left+straight, - = right+straight, | = all three
-// BFS queue: expands one tip per symbol (left→right)
+// BFS queue: expands one tip per symbol (dot/dash/bar) (left→right)
 
 let branchAngle = 40;
 let lenDecay = 0.72;
@@ -26,7 +26,7 @@ let symbolQueue = [];
 let typedText = "";
 
 function setup() {
-  createCanvas(700, 700);
+  createCanvas(700, 500);
   angleMode(DEGREES);
   stroke(0);
   noFill();
@@ -41,21 +41,13 @@ function resetTree() {
 }
 
 function draw() {
-  // background(255);
-
   // expand one queued symbol per step
   if (symbolQueue.length > 0) {
     const sym = symbolQueue.shift();
     expandNextTip(sym);
   }
 
-  // draw all segments persistently
-  for (const s of segments) {
-    strokeWeight(s.w);
-    line(s.x1, s.y1, s.x2, s.y2);
-  }
-
-  // draw active tips (preview)
+  // draw active tips
   stroke(0);
   for (const b of tipQueue) {
     const x2 = b.x + cos(b.angle) * b.len;
@@ -196,12 +188,6 @@ function clashesWithExisting(x1, y1, x2, y2, parent) {
 }
 
 
-
-
-function makeTip(x, y, angle, len, w) {
-  return { x, y, angle, len, w };
-}
-
 function keyTyped() {
   const ch = key;
   if (ch === ' ') {
@@ -221,8 +207,3 @@ function enqueueMorse(codeStr) {
   for (const c of codeStr) symbolQueue.push(c);
   symbolQueue.push('|');
 }
-
-// helpers
-function setAngle(a){ branchAngle = a; }
-function setDecay(l,t){ lenDecay = l; thicknessDecay = t; }
-function clearTree(){ resetTree(); }
