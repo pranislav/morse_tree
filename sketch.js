@@ -34,8 +34,7 @@ function setup() {
 }
 
 function resetTree() {
-    segments = [];
-    tipQueue = [{
+    initialBranch = {
         x1: width / 2,
         y1: height,
         x2: width / 2,
@@ -43,7 +42,9 @@ function resetTree() {
         angle: -90,
         len: 120,
         w: 6
-    }];
+    };
+    tipQueue = [initialBranch];
+    segments = [initialBranch];
     symbolQueue = [];
     typedText = "";
 }
@@ -90,10 +91,8 @@ function expandNextTip(symbol) {
         }
     }
 
-    // --- ACCEPT: draw parent, enqueue children ---
-    segments.push(b);
-
     for (const c of children) {
+        segments.push(c);
         tipQueue.push(c);
     }
 }
