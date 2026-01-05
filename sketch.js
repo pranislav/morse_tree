@@ -11,13 +11,13 @@ const MIN_LEN = 10.0;
 const MIN_W = 0.6;
 
 const MORSE = {
-  'A':'.-','B':'-...','C':'-.-.','D':'-..','E':'.','F':'..-.',
-  'G':'--.','H':'....','I':'..','J':'.---','K':'-.-','L':'.-..',
-  'M':'--','N':'-.','O':'---','P':'.--.','Q':'--.-','R':'.-.',
-  'S':'...','T':'-','U':'..-','V':'...-','W':'.--','X':'-..-',
-  'Y':'-.--','Z':'--..',
-  '1':'.----','2':'..---','3':'...--','4':'....-','5':'.....',
-  '6':'-....','7':'--...','8':'---..','9':'----.','0':'-----'
+    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+    'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+    'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+    'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+    'Y': '-.--', 'Z': '--..',
+    '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
+    '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----'
 };
 
 let segments = [];
@@ -26,81 +26,81 @@ let symbolQueue = [];
 let typedText = "";
 
 function setup() {
-  createCanvas(700, 500);
-  angleMode(DEGREES);
-  stroke(0);
-  noFill();
-  resetTree();
+    createCanvas(700, 500);
+    angleMode(DEGREES);
+    stroke(0);
+    noFill();
+    resetTree();
 }
 
 function resetTree() {
-  segments = [];
-  tipQueue = [{
-    x1: width/2,
-    y1: height,
-    x2: width/2,
-    y2: height - 120,
-    angle: -90,
-    len: 120,
-    w: 6
-}];
-  symbolQueue = [];
-  typedText = "";
+    segments = [];
+    tipQueue = [{
+        x1: width / 2,
+        y1: height,
+        x2: width / 2,
+        y2: height - 120,
+        angle: -90,
+        len: 120,
+        w: 6
+    }];
+    symbolQueue = [];
+    typedText = "";
 }
 
 function draw() {
-  // expand one queued symbol per step
-  if (symbolQueue.length > 0) {
-    const sym = symbolQueue.shift();
-    expandNextTip(sym);
-  }
+    // expand one queued symbol per step
+    if (symbolQueue.length > 0) {
+        const sym = symbolQueue.shift();
+        expandNextTip(sym);
+    }
 
-  // draw active tips
-  stroke(0);
-  for (const b of tipQueue) {
-    strokeWeight(b.w);
-    line(b.x1, b.y1, b.x2, b.y2);
-  }
+    // draw active tips
+    stroke(0);
+    for (const b of tipQueue) {
+        strokeWeight(b.w);
+        line(b.x1, b.y1, b.x2, b.y2);
+    }
 
-  // HUD
-  noStroke(); fill(0); textSize(12);
-  text(
-    "Type letters/digits/spaces to grow.\n" +
-    "Angle " + branchAngle + "°, decay " + nf(lenDecay,1,2) + "/" + nf(thicknessDecay,1,2) +
-    "\nTyped: " + typedText,
-    12, 16
-  );
+    // HUD
+    noStroke(); fill(0); textSize(12);
+    text(
+        "Type letters/digits/spaces to grow.\n" +
+        "Angle " + branchAngle + "°, decay " + nf(lenDecay, 1, 2) + "/" + nf(thicknessDecay, 1, 2) +
+        "\nTyped: " + typedText,
+        12, 16
+    );
 }
 
 function expandNextTip(symbol) {
-  if (tipQueue.length === 0) return;
+    if (tipQueue.length === 0) return;
 
-  const b = tipQueue.shift();
-  const children = encodeChildren(symbol, b);
+    const b = tipQueue.shift();
+    const children = encodeChildren(symbol, b);
 
-  // --- CLASH CHECK (atomic) ---
-  for (const c of children) {
-    if (clashesWithExisting(
-          c.x1, c.y1, c.x2, c.y2,
-          b.parent   // skip own parent
+    // --- CLASH CHECK (atomic) ---
+    for (const c of children) {
+        if (clashesWithExisting(
+            c.x1, c.y1, c.x2, c.y2,
+            b.parent   // skip own parent
         )) {
-      // parent dies, retry symbol on next tip
-      symbolQueue.unshift(symbol);
-      return;
+            // parent dies, retry symbol on next tip
+            symbolQueue.unshift(symbol);
+            return;
+        }
     }
-  }
 
-  // --- ACCEPT: draw parent, enqueue children ---
-  segments.push(b);
+    // --- ACCEPT: draw parent, enqueue children ---
+    segments.push(b);
 
-  for (const c of children) {
-    tipQueue.push(c);
-  }
+    for (const c of children) {
+        tipQueue.push(c);
+    }
 }
 
 function makeChild(angle, parent) {
     const newLen = max(parent.len * lenDecay, MIN_LEN);
-    const newW   = max(parent.w   * thicknessDecay, MIN_W);
+    const newW = max(parent.w * thicknessDecay, MIN_W);
     return {
         x1: parent.x2,
         y1: parent.y2,
@@ -132,69 +132,69 @@ function encodeChildren(symbol, parent) {
 }
 
 function segmentsIntersect(a, b, c, d) {
-  function orient(p, q, r) {
-    return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-  }
+    function orient(p, q, r) {
+        return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+    }
 
-  function onSeg(p, q, r) {
-    return q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) &&
-           q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y);
-  }
+    function onSeg(p, q, r) {
+        return q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) &&
+            q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y);
+    }
 
-  const o1 = orient(a, b, c);
-  const o2 = orient(a, b, d);
-  const o3 = orient(c, d, a);
-  const o4 = orient(c, d, b);
+    const o1 = orient(a, b, c);
+    const o2 = orient(a, b, d);
+    const o3 = orient(c, d, a);
+    const o4 = orient(c, d, b);
 
-  if (o1 * o2 < 0 && o3 * o4 < 0) return true;
+    if (o1 * o2 < 0 && o3 * o4 < 0) return true;
 
-  if (o1 === 0 && onSeg(a, c, b)) return true;
-  if (o2 === 0 && onSeg(a, d, b)) return true;
-  if (o3 === 0 && onSeg(c, a, d)) return true;
-  if (o4 === 0 && onSeg(c, b, d)) return true;
+    if (o1 === 0 && onSeg(a, c, b)) return true;
+    if (o2 === 0 && onSeg(a, d, b)) return true;
+    if (o3 === 0 && onSeg(c, a, d)) return true;
+    if (o4 === 0 && onSeg(c, b, d)) return true;
 
-  return false;
+    return false;
 }
 
 
 function clashesWithExisting(x1, y1, x2, y2, parent) {
-  const EPS = 1e-3;
+    const EPS = 1e-3;
 
-  for (const s of segments) {
-    // skip parent segment
-    if (s === parent) continue;
+    for (const s of segments) {
+        // skip parent segment
+        if (s === parent) continue;
 
-    // ignore tiny overlaps at the joint
-    if (dist(x1, y1, s.x1, s.y1) < EPS ||
-        dist(x1, y1, s.x2, s.y2) < EPS) continue;
+        // ignore tiny overlaps at the joint
+        if (dist(x1, y1, s.x1, s.y1) < EPS ||
+            dist(x1, y1, s.x2, s.y2) < EPS) continue;
 
-    if (segmentsIntersect(
-      {x:x1, y:y1}, {x:x2, y:y2},
-      {x:s.x1, y:s.y1}, {x:s.x2, y:s.y2}
-    )) {
-      return true;
+        if (segmentsIntersect(
+            { x: x1, y: y1 }, { x: x2, y: y2 },
+            { x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 }
+        )) {
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 
 function keyTyped() {
-  const ch = key;
-  if (ch === ' ') {
-    symbolQueue.push('|', '|');
-    typedText += ' ';
-  } else {
-    const c = ch.toUpperCase();
-    if (MORSE[c]) {
-      enqueueMorse(MORSE[c]);
-      typedText += c;
+    const ch = key;
+    if (ch === ' ') {
+        symbolQueue.push('|', '|');
+        typedText += ' ';
+    } else {
+        const c = ch.toUpperCase();
+        if (MORSE[c]) {
+            enqueueMorse(MORSE[c]);
+            typedText += c;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 function enqueueMorse(codeStr) {
-  for (const c of codeStr) symbolQueue.push(c);
-  symbolQueue.push('|');
+    for (const c of codeStr) symbolQueue.push(c);
+    symbolQueue.push('|');
 }
