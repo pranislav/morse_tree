@@ -41,7 +41,8 @@ function resetTree() {
         y2: height - 120,
         angle: -90,
         len: 120,
-        w: 6
+        w: 6, 
+        parent: null
     };
     tipQueue = [initialBranch];
     segments = [initialBranch];
@@ -81,10 +82,7 @@ function expandNextTip(symbol) {
 
     // --- CLASH CHECK (atomic) ---
     for (const c of children) {
-        if (clashesWithExisting(
-            c.x1, c.y1, c.x2, c.y2,
-            b.parent   // skip own parent
-        )) {
+        if (clashesWithExisting(c)) {
             // parent dies, retry symbol on next tip
             symbolQueue.unshift(symbol);
             return;
@@ -156,8 +154,10 @@ function segmentsIntersect(a, b, c, d) {
 }
 
 
-function clashesWithExisting(x1, y1, x2, y2, parent) {
+function clashesWithExisting(segment) {
     const EPS = 1e-3;
+
+    const { x1, y1, x2, y2, angle, len, w, parent } = segment;
 
     for (const s of segments) {
         // skip parent segment
