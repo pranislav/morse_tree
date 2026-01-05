@@ -35,7 +35,15 @@ function setup() {
 
 function resetTree() {
   segments = [];
-  tipQueue = [{ x: width/2, y: height, angle: -90, len: 120, w: 6 }];
+  tipQueue = [{
+    x1: width/2,
+    y1: height,
+    x2: width/2,
+    y2: height - 120,
+    angle: -90,
+    len: 120,
+    w: 6
+}];
   symbolQueue = [];
   typedText = "";
 }
@@ -50,10 +58,8 @@ function draw() {
   // draw active tips
   stroke(0);
   for (const b of tipQueue) {
-    const x2 = b.x + cos(b.angle) * b.len;
-    const y2 = b.y + sin(b.angle) * b.len;
     strokeWeight(max(1, b.w * 0.6));
-    line(b.x, b.y, x2, y2);
+    line(b.x1, b.y1, b.x2, b.y2);
   }
 
   // HUD
@@ -71,15 +77,15 @@ function expandNextTip(symbol) {
 
   const b = tipQueue.shift();
 
-  // parent segment
-  const px2 = b.x + cos(b.angle) * b.len;
-  const py2 = b.y + sin(b.angle) * b.len;
+//   // parent segment
+//   const px2 = b.x + cos(b.angle) * b.len;
+//   const py2 = b.y + sin(b.angle) * b.len;
 
-  const parentSeg = {
-    x1: b.x, y1: b.y,
-    x2: px2, y2: py2,
-    w: b.w
-  };
+//   const parentSeg = {
+//     x1: b.x, y1: b.y,
+//     x2: px2, y2: py2,
+//     w: b.w
+//   };
 
   let newLen = max(b.len * lenDecay, MIN_LEN);
   let newW   = max(b.w   * thicknessDecay, MIN_W);
@@ -88,13 +94,14 @@ function expandNextTip(symbol) {
   const children = [];
   function child(angle) {
     return {
-      x1: px2,
-      y1: py2,
-      x2: px2 + cos(angle) * newLen,
-      y2: py2 + sin(angle) * newLen,
+      x1: b.x2,
+      y1: b.y2,
+      x2: b.x2 + cos(angle) * newLen,
+      y2: b.y2 + sin(angle) * newLen,
       angle,
       len: newLen,
-      w: newW
+      w: newW,
+      parent: b
     };
   }
 
@@ -125,17 +132,10 @@ function expandNextTip(symbol) {
   }
 
   // --- ACCEPT: draw parent, enqueue children ---
-  segments.push(parentSeg);
+  segments.push(b);
 
   for (const c of children) {
-    tipQueue.push({
-      x: c.x1,
-      y: c.y1,
-      angle: c.angle,
-      len: c.len,
-      w: c.w,
-      parent: parentSeg
-    });
+    tipQueue.push(c);
   }
 }
 
