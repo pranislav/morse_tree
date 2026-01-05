@@ -118,8 +118,8 @@ function encodeChildren(symbol, parent) {
         children.push(makeChild(parent.angle - branchAngle, parent));
         children.push(makeChild(parent.angle, parent));
     } else if (symbol === '-') {
-        children.push(makeChild(parent.angle + branchAngle, parent));
         children.push(makeChild(parent.angle, parent));
+        children.push(makeChild(parent.angle + branchAngle, parent));
     } else if (symbol === '|') {
         children.push(makeChild(parent.angle - branchAngle, parent));
         children.push(makeChild(parent.angle, parent));
