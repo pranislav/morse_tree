@@ -58,7 +58,7 @@ function draw() {
   // draw active tips
   stroke(0);
   for (const b of tipQueue) {
-    strokeWeight(max(1, b.w * 0.6));
+    strokeWeight(b.w);
     line(b.x1, b.y1, b.x2, b.y2);
   }
 
@@ -76,48 +76,7 @@ function expandNextTip(symbol) {
   if (tipQueue.length === 0) return;
 
   const b = tipQueue.shift();
-
-//   // parent segment
-//   const px2 = b.x + cos(b.angle) * b.len;
-//   const py2 = b.y + sin(b.angle) * b.len;
-
-//   const parentSeg = {
-//     x1: b.x, y1: b.y,
-//     x2: px2, y2: py2,
-//     w: b.w
-//   };
-
-  let newLen = max(b.len * lenDecay, MIN_LEN);
-  let newW   = max(b.w   * thicknessDecay, MIN_W);
-
-  // --- build children FIRST (nothing drawn yet) ---
-  const children = [];
-  function child(angle) {
-    return {
-      x1: b.x2,
-      y1: b.y2,
-      x2: b.x2 + cos(angle) * newLen,
-      y2: b.y2 + sin(angle) * newLen,
-      angle,
-      len: newLen,
-      w: newW,
-      parent: b
-    };
-  }
-
-  if (symbol === '.') {
-    children.push(child(b.angle - branchAngle));
-    children.push(child(b.angle));
-  } else if (symbol === '-') {
-    children.push(child(b.angle + branchAngle));
-    children.push(child(b.angle));
-  } else if (symbol === '|') {
-    children.push(child(b.angle - branchAngle));
-    children.push(child(b.angle));
-    children.push(child(b.angle + branchAngle));
-  } else {
-    children.push(child(b.angle));
-  }
+  const children = encodeChildren(symbol, b);
 
   // --- CLASH CHECK (atomic) ---
   for (const c of children) {
@@ -137,6 +96,39 @@ function expandNextTip(symbol) {
   for (const c of children) {
     tipQueue.push(c);
   }
+}
+
+function makeChild(angle, parent) {
+    const newLen = max(parent.len * lenDecay, MIN_LEN);
+    const newW   = max(parent.w   * thicknessDecay, MIN_W);
+    return {
+        x1: parent.x2,
+        y1: parent.y2,
+        x2: parent.x2 + cos(angle) * newLen,
+        y2: parent.y2 + sin(angle) * newLen,
+        angle,
+        len: newLen,
+        w: newW,
+        parent: parent
+    };
+}
+
+function encodeChildren(symbol, parent) {
+    const children = [];
+    if (symbol === '.') {
+        children.push(makeChild(parent.angle - branchAngle, parent));
+        children.push(makeChild(parent.angle, parent));
+    } else if (symbol === '-') {
+        children.push(makeChild(parent.angle + branchAngle, parent));
+        children.push(makeChild(parent.angle, parent));
+    } else if (symbol === '|') {
+        children.push(makeChild(parent.angle - branchAngle, parent));
+        children.push(makeChild(parent.angle, parent));
+        children.push(makeChild(parent.angle + branchAngle, parent));
+    } else {
+        children.push(makeChild(parent.angle, parent));
+    }
+    return children;
 }
 
 function segmentsIntersect(a, b, c, d) {
