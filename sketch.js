@@ -9,6 +9,7 @@ let thicknessDecay = 0.8;
 
 const MIN_LEN = 10.0;
 const MIN_W = 0.6;
+const MIN_CLEARANCE = 2.0;
 
 const MORSE = {
     'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
@@ -41,7 +42,7 @@ function resetTree() {
         y2: height - 120,
         angle: -90,
         len: 120,
-        w: 6, 
+        w: 6,
         parent: null
     };
     tipQueue = [initialBranch];
@@ -80,9 +81,9 @@ function expandNextTip(symbol) {
     const b = tipQueue.shift();
     const children = encodeChildren(symbol, b);
 
-    // --- CLASH CHECK (atomic) ---
+    // --- PROXIMITY CHECK (atomic) ---
     for (const c of children) {
-        if (clashesWithExisting(c)) {
+        if (segmentTooClose(c)) {
             // parent dies, retry symbol on next tip
             symbolQueue.unshift(symbol);
             return;
@@ -128,53 +129,72 @@ function encodeChildren(symbol, parent) {
     return children;
 }
 
-function segmentsIntersect(a, b, c, d) {
-    function orient(p, q, r) {
-        return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+
+function segmentTooClose(c, clearance = MIN_CLEARANCE) {
+
+    for (const s of segments) {
+        // skip parent
+        if (s === c.parent) continue;
+
+        const d = segmentSegmentDistance(
+            c.x1, c.y1, c.x2, c.y2,
+            s.x1, s.y1, s.x2, s.y2
+        );
+
+        const margin = clearance + 0.5 * (c.w + s.w);
+        if (d < margin) return true;
     }
-
-    function onSeg(p, q, r) {
-        return q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) &&
-            q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y);
-    }
-
-    const o1 = orient(a, b, c);
-    const o2 = orient(a, b, d);
-    const o3 = orient(c, d, a);
-    const o4 = orient(c, d, b);
-
-    if (o1 * o2 < 0 && o3 * o4 < 0) return true;
-
-    if (o1 === 0 && onSeg(a, c, b)) return true;
-    if (o2 === 0 && onSeg(a, d, b)) return true;
-    if (o3 === 0 && onSeg(c, a, d)) return true;
-    if (o4 === 0 && onSeg(c, b, d)) return true;
 
     return false;
 }
 
+function segmentSegmentDistance(x1, y1, x2, y2, x3, y3, x4, y4) {
+    // helper
+    function dot(ax, ay, bx, by) { return ax * bx + ay * by; }
 
-function clashesWithExisting(segment) {
-    const EPS = 1e-3;
+    const ux = x2 - x1, uy = y2 - y1;
+    const vx = x4 - x3, vy = y4 - y3;
+    const wx = x1 - x3, wy = y1 - y3;
 
-    const { x1, y1, x2, y2, angle, len, w, parent } = segment;
+    const a = dot(ux, uy, ux, uy);
+    const b = dot(ux, uy, vx, vy);
+    const c = dot(vx, vy, vx, vy);
+    const d = dot(ux, uy, wx, wy);
+    const e = dot(vx, vy, wx, wy);
 
-    for (const s of segments) {
-        // skip parent segment
-        if (s === parent) continue;
+    const D = a * c - b * b;
+    let sc, sN, sD = D;
+    let tc, tN, tD = D;
 
-        // ignore tiny overlaps at the joint
-        if (dist(x1, y1, s.x1, s.y1) < EPS ||
-            dist(x1, y1, s.x2, s.y2) < EPS) continue;
-
-        if (segmentsIntersect(
-            { x: x1, y: y1 }, { x: x2, y: y2 },
-            { x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 }
-        )) {
-            return true;
-        }
+    if (D < 1e-8) {
+        sN = 0; sD = 1;
+        tN = e; tD = c;
+    } else {
+        sN = (b * e - c * d);
+        tN = (a * e - b * d);
+        if (sN < 0) { sN = 0; tN = e; tD = c; }
+        else if (sN > sD) { sN = sD; tN = e + b; tD = c; }
     }
-    return false;
+
+    if (tN < 0) {
+        tN = 0;
+        if (-d < 0) sN = 0;
+        else if (-d > a) sN = sD;
+        else { sN = -d; sD = a; }
+    } else if (tN > tD) {
+        tN = tD;
+        if ((-d + b) < 0) sN = 0;
+        else if ((-d + b) > a) sN = sD;
+        else { sN = (-d + b); sD = a; }
+    }
+
+    sc = Math.abs(sN) < 1e-8 ? 0 : sN / sD;
+    tc = Math.abs(tN) < 1e-8 ? 0 : tN / tD;
+
+    const dx = wx + sc * ux - tc * vx;
+    const dy = wy + sc * uy - tc * vy;
+
+    return Math.hypot(dx, dy);
 }
 
 
