@@ -25,6 +25,8 @@ let segments = [];
 let tipQueue = [];
 let symbolQueue = [];
 let typedText = "";
+let history = [];
+
 
 function setup() {
     createCanvas(700, 500);
@@ -52,28 +54,26 @@ function resetTree() {
 }
 
 function draw() {
-    // expand one queued symbol per step
-    if (symbolQueue.length > 0) {
-        const sym = symbolQueue.shift();
-        expandNextTip(sym);
-    }
+  background(255);
 
-    // draw active tips
-    stroke(0);
-    for (const b of tipQueue) {
-        strokeWeight(b.w);
-        line(b.x1, b.y1, b.x2, b.y2);
-    }
+  // expand one symbol
+  if (symbolQueue.length > 0) {
+    expandNextTip(symbolQueue.shift());
+  }
 
-    // HUD
-    noStroke(); fill(0); textSize(12);
-    text(
-        "Type letters/digits/spaces to grow.\n" +
-        "Angle " + branchAngle + "°, decay " + nf(lenDecay, 1, 2) + "/" + nf(thicknessDecay, 1, 2) +
-        "\nTyped: " + typedText,
-        12, 16
-    );
+  // draw committed segments
+  stroke(0);
+  for (const s of segments) {
+    strokeWeight(s.w);
+    line(s.x1, s.y1, s.x2, s.y2);
+  }
+
+
+  // HUD
+  noStroke(); fill(0);
+  text("Typed: " + typedText, 12, 16);
 }
+
 
 function expandNextTip(symbol) {
     if (tipQueue.length === 0) return;
@@ -201,11 +201,23 @@ function segmentSegmentDistance(x1, y1, x2, y2, x3, y3, x4, y4) {
 function keyTyped() {
     const ch = key;
     if (ch === ' ') {
+        history.push({
+        segments: segments.slice(),
+        tipQueue: tipQueue.slice(),
+        symbolQueue: symbolQueue.slice(),
+        typedText
+        });
         symbolQueue.push('|', '|');
         typedText += ' ';
     } else {
         const c = ch.toUpperCase();
         if (MORSE[c]) {
+            history.push({
+            segments: segments.slice(),
+            tipQueue: tipQueue.slice(),
+            symbolQueue: symbolQueue.slice(),
+            typedText
+            });
             enqueueMorse(MORSE[c]);
             typedText += c;
         }
@@ -217,3 +229,21 @@ function enqueueMorse(codeStr) {
     for (const c of codeStr) symbolQueue.push(c);
     symbolQueue.push('|');
 }
+
+function keyPressed() {
+  if (keyCode === BACKSPACE && history.length > 0) {
+    undoLast();
+    return false;
+  }
+}
+
+function undoLast() {
+  if (history.length === 0) return;
+
+  const h = history.pop();
+  segments = h.segments;
+  tipQueue = h.tipQueue;
+  symbolQueue = h.symbolQueue;
+  typedText = h.typedText;
+}
+
