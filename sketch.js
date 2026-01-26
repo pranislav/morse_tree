@@ -10,6 +10,8 @@ let thicknessDecay = 0.8;
 const MIN_LEN = 10.0;
 const MIN_W = 0.6;
 const MIN_CLEARANCE = 2.0;
+const UNDO_DELAY = 6; // frames
+
 
 const MORSE = {
     'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
@@ -26,6 +28,7 @@ let tipQueue = [];
 let symbolQueue = [];
 let typedText = "";
 let history = [];
+let lastUndoFrame = 0;
 
 
 function setup() {
@@ -54,24 +57,31 @@ function resetTree() {
 }
 
 function draw() {
-  background(255);
+    background(255);
 
-  // expand one symbol
-  if (symbolQueue.length > 0) {
-    expandNextTip(symbolQueue.shift());
-  }
+    // expand one symbol
+    if (symbolQueue.length > 0) {
+        expandNextTip(symbolQueue.shift());
+    }
 
-  // draw committed segments
-  stroke(0);
-  for (const s of segments) {
-    strokeWeight(s.w);
-    line(s.x1, s.y1, s.x2, s.y2);
-  }
+    // draw committed segments
+    stroke(0);
+    for (const s of segments) {
+        strokeWeight(s.w);
+        line(s.x1, s.y1, s.x2, s.y2);
+    }
+
+    if (keyIsDown(BACKSPACE) && history.length > 0) {
+        if (frameCount - lastUndoFrame > UNDO_DELAY) {
+            undoLast();
+            lastUndoFrame = frameCount;
+        }
+    }
 
 
-  // HUD
-  noStroke(); fill(0);
-  text("Typed: " + typedText, 12, 16);
+    // HUD
+    noStroke(); fill(0);
+    text("Typed: " + typedText, 12, 16);
 }
 
 
@@ -202,10 +212,10 @@ function keyTyped() {
     const ch = key;
     if (ch === ' ') {
         history.push({
-        segments: segments.slice(),
-        tipQueue: tipQueue.slice(),
-        symbolQueue: symbolQueue.slice(),
-        typedText
+            segments: segments.slice(),
+            tipQueue: tipQueue.slice(),
+            symbolQueue: symbolQueue.slice(),
+            typedText
         });
         symbolQueue.push('|', '|');
         typedText += ' ';
@@ -213,10 +223,10 @@ function keyTyped() {
         const c = ch.toUpperCase();
         if (MORSE[c]) {
             history.push({
-            segments: segments.slice(),
-            tipQueue: tipQueue.slice(),
-            symbolQueue: symbolQueue.slice(),
-            typedText
+                segments: segments.slice(),
+                tipQueue: tipQueue.slice(),
+                symbolQueue: symbolQueue.slice(),
+                typedText
             });
             enqueueMorse(MORSE[c]);
             typedText += c;
@@ -230,20 +240,14 @@ function enqueueMorse(codeStr) {
     symbolQueue.push('|');
 }
 
-function keyPressed() {
-  if (keyCode === BACKSPACE && history.length > 0) {
-    undoLast();
-    return false;
-  }
-}
 
 function undoLast() {
-  if (history.length === 0) return;
+    if (history.length === 0) return;
 
-  const h = history.pop();
-  segments = h.segments;
-  tipQueue = h.tipQueue;
-  symbolQueue = h.symbolQueue;
-  typedText = h.typedText;
+    const h = history.pop();
+    segments = h.segments;
+    tipQueue = h.tipQueue;
+    symbolQueue = h.symbolQueue;
+    typedText = h.typedText;
 }
 
