@@ -54,6 +54,16 @@ function setup() {
 
     canvas.parent(ui);
     makeControls();
+
+    textInput = createInput('');
+    textInput.attribute('placeholder', 'Type…');
+    textInput.style('font-size', '18px');
+    textInput.style('width', '100%');
+    textInput.input(() => {
+        const ch = textInput.value().slice(-1);
+        handleChar(ch);
+    });
+
 }
 
 function resetTree() {
@@ -267,32 +277,35 @@ function segmentSegmentDistance(x1, y1, x2, y2, x3, y3, x4, y4) {
 }
 
 
-function keyTyped() {
-    if (document.activeElement.tagName === 'INPUT') return;
+function handleChar(ch) {
 
-    const ch = key;
     if (ch === ' ') {
-        history.push({
-            segments: segments.slice(),
-            tipQueue: tipQueue.slice(),
-            symbolQueue: symbolQueue.slice(),
-            typedText
-        });
+        history.push(snapshot());
         symbolQueue.push('|', '|');
         typedText += ' ';
     } else {
         const c = ch.toUpperCase();
         if (MORSE[c]) {
-            history.push({
-                segments: segments.slice(),
-                tipQueue: tipQueue.slice(),
-                symbolQueue: symbolQueue.slice(),
-                typedText
-            });
+            history.push(snapshot());
             enqueueMorse(MORSE[c]);
             typedText += c;
         }
     }
+
+    textInput.value(typedText);
+}
+
+function snapshot() {
+  return {
+    segments: segments.slice(),
+    tipQueue: tipQueue.slice(),
+    symbolQueue: symbolQueue.slice(),
+    typedText
+  };
+}
+
+function keyTyped() {
+    handleChar(key);
     return false;
 }
 
@@ -311,4 +324,9 @@ function undoLast() {
     symbolQueue = h.symbolQueue;
     typedText = h.typedText;
 }
+
+function touchStarted() {
+  textInput.elt.focus();
+}
+
 
