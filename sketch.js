@@ -54,6 +54,16 @@ function setup() {
 
     canvas.parent(ui);
     makeControls();
+
+    textInput = createInput('');
+    textInput.attribute('placeholder', 'Type…');
+    textInput.style('font-size', '18px');
+    textInput.style('width', '100%');
+    textInput.input(() => {
+        const ch = textInput.value().slice(-1);
+        handleChar(ch);
+    });
+
 }
 
 function resetTree() {
@@ -311,4 +321,9 @@ function undoLast() {
     symbolQueue = h.symbolQueue;
     typedText = h.typedText;
 }
+
+function touchStarted() {
+  textInput.elt.focus();
+}
+
 
