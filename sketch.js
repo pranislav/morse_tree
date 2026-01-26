@@ -149,8 +149,6 @@ function draw() {
         }
     }
 
-    textDisplay.html(typedText);
-
 }
 
 
@@ -305,6 +303,7 @@ function snapshot() {
 }
 
 function keyTyped() {
+    if (document.activeElement.tagName === 'INPUT') return;
     handleChar(key);
     return false;
 }
@@ -323,10 +322,10 @@ function undoLast() {
     tipQueue = h.tipQueue;
     symbolQueue = h.symbolQueue;
     typedText = h.typedText;
+
+    textInput.value(typedText);
 }
 
 function touchStarted() {
   textInput.elt.focus();
 }
-
-
