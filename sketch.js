@@ -14,6 +14,10 @@ let typedText = "";
 let history = [];
 let lastUndoFrame = 0;
 let textDisplay;
+let ui;
+let controls;
+let canvas;
+
 
 const MIN_LEN = 10.0;
 const MIN_W = 0.6;
@@ -33,7 +37,7 @@ const MORSE = {
 
 
 function setup() {
-    createCanvas(700, 500);
+    canvas = createCanvas(700, 500);
     angleMode(DEGREES);
     stroke(0);
     noFill();
@@ -41,6 +45,15 @@ function setup() {
     textDisplay = createDiv('');
     textDisplay.style('font-family', 'monospace');
     textDisplay.style('margin', '8px');
+
+    ui = createDiv().style('display', 'flex');
+    controls = createDiv().parent(ui)
+        .style('display', 'flex')
+        .style('flex-direction', 'column')
+        .style('gap', '12px');
+
+    canvas.parent(ui);
+    makeControls();
 }
 
 function resetTree() {
@@ -59,6 +72,50 @@ function resetTree() {
     symbolQueue = [];
     typedText = "";
 }
+
+function makeControl(label, min, max, step, value, onChange) {
+    const row = createDiv().style('display', 'flex')
+        .style('flex-direction', 'column');
+
+    const caption = createSpan(label);
+    const slider = createSlider(min, max, value, step);
+    const input = createInput(value, 'number');
+
+    slider.input(() => {
+        input.value(slider.value());
+        onChange(Number(slider.value()));
+    });
+
+    input.input(() => {
+        let v = constrain(Number(input.value()), min, max);
+        slider.value(v);
+        onChange(v);
+    });
+
+    caption.parent(row);
+    slider.parent(row);
+    input.parent(row);
+
+    return row;
+}
+
+function makeControls() {
+    makeControl('Branch angle (°)', 5, 80, 1, branchAngle,
+        v => branchAngle = v).parent(controls);
+
+    makeControl('Length decay', 0.5, 0.95, 0.01, lenDecay,
+        v => lenDecay = v).parent(controls);
+
+    makeControl('Width decay', 0.5, 0.95, 0.01, thicknessDecay,
+        v => thicknessDecay = v).parent(controls);
+
+    makeControl('Min length', 2, 50, 1, MIN_LEN,
+        v => MIN_LEN = v).parent(controls);
+
+    makeControl('Min width', 0.1, 5, 0.1, MIN_W,
+        v => MIN_W = v).parent(controls);
+}
+
 
 function draw() {
     background(255);
@@ -211,6 +268,8 @@ function segmentSegmentDistance(x1, y1, x2, y2, x3, y3, x4, y4) {
 
 
 function keyTyped() {
+    if (document.activeElement.tagName === 'INPUT') return;
+
     const ch = key;
     if (ch === ' ') {
         history.push({
