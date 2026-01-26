@@ -7,6 +7,14 @@ let branchAngle = 40;
 let lenDecay = 0.72;
 let thicknessDecay = 0.8;
 
+let segments = [];
+let tipQueue = [];
+let symbolQueue = [];
+let typedText = "";
+let history = [];
+let lastUndoFrame = 0;
+let textDisplay;
+
 const MIN_LEN = 10.0;
 const MIN_W = 0.6;
 const MIN_CLEARANCE = 2.0;
@@ -23,13 +31,6 @@ const MORSE = {
     '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----'
 };
 
-let segments = [];
-let tipQueue = [];
-let symbolQueue = [];
-let typedText = "";
-let history = [];
-let lastUndoFrame = 0;
-
 
 function setup() {
     createCanvas(700, 500);
@@ -37,6 +38,9 @@ function setup() {
     stroke(0);
     noFill();
     resetTree();
+    textDisplay = createDiv('');
+    textDisplay.style('font-family', 'monospace');
+    textDisplay.style('margin', '8px');
 }
 
 function resetTree() {
@@ -78,10 +82,8 @@ function draw() {
         }
     }
 
+    textDisplay.html(typedText);
 
-    // HUD
-    noStroke(); fill(0);
-    text("Typed: " + typedText, 12, 16);
 }
 
 
