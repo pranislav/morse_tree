@@ -128,27 +128,70 @@ function makeControls() {
 
 
 function draw() {
-    background(255);
+  background(255);
 
-    // expand one symbol
-    if (symbolQueue.length > 0) {
-        expandNextTip(symbolQueue.shift());
+  updateTree();
+  handleContinuousUndo();
+
+  const bounds = computeBounds(segments);
+  applyCamera(bounds);
+
+  drawSegments();
+
+  pop(); // camera
+}
+
+function updateTree() {
+  if (symbolQueue.length > 0) {
+    expandNextTip(symbolQueue.shift());
+  }
+}
+
+function handleContinuousUndo() {
+  if (keyIsDown(BACKSPACE) && history.length > 0) {
+    if (frameCount - lastUndoFrame > UNDO_DELAY) {
+      undoLast();
+      lastUndoFrame = frameCount;
     }
+  }
+}
 
-    // draw committed segments
-    stroke(0);
-    for (const s of segments) {
-        strokeWeight(s.w);
-        line(s.x1, s.y1, s.x2, s.y2);
-    }
+function computeBounds(segs) {
+  let minX = Infinity, minY = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
 
-    if (keyIsDown(BACKSPACE) && history.length > 0) {
-        if (frameCount - lastUndoFrame > UNDO_DELAY) {
-            undoLast();
-            lastUndoFrame = frameCount;
-        }
-    }
+  for (const s of segs) {
+    minX = min(minX, s.x1, s.x2);
+    minY = min(minY, s.y1, s.y2);
+    maxX = max(maxX, s.x1, s.x2);
+    maxY = max(maxY, s.y1, s.y2);
+  }
 
+  return { minX, minY, maxX, maxY };
+}
+
+function applyCamera(b) {
+  push();
+
+  const w = max(1, b.maxX - b.minX);
+  const h = max(1, b.maxY - b.minY);
+  const pad = 40;
+
+  const sx = (width  - pad) / w;
+  const sy = (height - pad) / h;
+  const s  = min(sx, sy);
+
+  translate(width / 2, height / 2);
+  scale(s);
+  translate(-(b.minX + b.maxX) / 2, -(b.minY + b.maxY) / 2);
+}
+
+function drawSegments() {
+  stroke(0);
+  for (const s of segments) {
+    strokeWeight(s.w);
+    line(s.x1, s.y1, s.x2, s.y2);
+  }
 }
 
 
