@@ -19,7 +19,7 @@ let controls;
 let canvas;
 let camScale = 1;
 let camTargetScale = 1;
-
+let savePNGButton, saveSVGButton;
 
 const MIN_LEN = 10.0;
 const MIN_W = 0.6;
@@ -68,7 +68,23 @@ function setup() {
         handleChar(ch);
     });
 
+    savePNGButton = createButton("Save PNG");
+    savePNGButton.parent(ui);
+    savePNGButton.mousePressed(() => {
+    saveCanvas("morse_tree", "png");
+    });
+
+    saveSVGButton = createButton("Save SVG");
+    saveSVGButton.parent(ui);
+    saveSVGButton.mousePressed(() => {
+    saveAsSVG();
+    });
+
+    savePNGButton.style('height', '2rem');  // adjust as needed
+    saveSVGButton.style('height', '2rem');
+
 }
+
 
 function resetTree() {
     initialBranch = {
@@ -384,4 +400,21 @@ function undoLast() {
 
 function touchStarted() {
   textInput.elt.focus();
+}
+
+function saveAsSVG() {
+  // start recording SVG into a buffer
+  beginRecordSVG(this, "morse_tree.svg");
+
+  // draw the tree world exactly like on canvas
+  beginCamera();  // reuse your camera transform
+  stroke(0);
+  for (const s of segments) {
+    strokeWeight(s.w);
+    line(s.x1, s.y1, s.x2, s.y2);
+  }
+  endCamera();
+
+  // finish and save
+  endRecordSVG();
 }
