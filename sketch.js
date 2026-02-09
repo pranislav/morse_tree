@@ -17,12 +17,16 @@ let textDisplay;
 let ui;
 let controls;
 let canvas;
+let camScale = 1;
+let camTargetScale = 1;
 
 
 const MIN_LEN = 10.0;
 const MIN_W = 0.6;
 const MIN_CLEARANCE = 2.0;
 const UNDO_DELAY = 6; // frames
+const VIEW_MARGIN = 40;
+const ZOOM_SMOOTH = 0.08;
 
 
 const MORSE = {
@@ -81,6 +85,8 @@ function resetTree() {
     segments = [initialBranch];
     symbolQueue = [];
     typedText = "";
+    resetCamera(initialBranch.x1, initialBranch.y1);
+
 }
 
 function makeControl(label, min, max, step, value, onChange) {
@@ -130,69 +136,76 @@ function makeControls() {
 function draw() {
   background(255);
 
-  updateTree();
-  handleContinuousUndo();
-
-  const bounds = computeBounds(segments);
-  applyCamera(bounds);
-
-  drawSegments();
-
-  pop(); // camera
-}
-
-function updateTree() {
+  // 1. simulation step (at most one symbol)
   if (symbolQueue.length > 0) {
     expandNextTip(symbolQueue.shift());
+    updateCamera();   // ← ONLY when geometry changed
   }
-}
 
-function handleContinuousUndo() {
+  // 2. continuous undo
   if (keyIsDown(BACKSPACE) && history.length > 0) {
     if (frameCount - lastUndoFrame > UNDO_DELAY) {
       undoLast();
+      updateCamera(); // ← geometry changed
       lastUndoFrame = frameCount;
     }
   }
+
+  // 3. draw tree with camera
+  beginCamera();
+
+  stroke(0);
+  for (const s of segments) {
+    strokeWeight(s.w);
+    line(s.x1, s.y1, s.x2, s.y2);
+  }
+
+  endCamera();
 }
 
-function computeBounds(segs) {
+
+function resetCamera(anchorX, anchorY) {
+  camScale = 1;
+  camTargetScale = 1;
+  camAnchorX = anchorX;
+  camAnchorY = anchorY;
+}
+
+function updateCamera() {
   let minX = Infinity, minY = Infinity;
   let maxX = -Infinity, maxY = -Infinity;
 
-  for (const s of segs) {
+  for (const s of segments) {
     minX = min(minX, s.x1, s.x2);
     minY = min(minY, s.y1, s.y2);
     maxX = max(maxX, s.x1, s.x2);
     maxY = max(maxY, s.y1, s.y2);
   }
 
-  return { minX, minY, maxX, maxY };
+  const w = maxX - minX;
+  const h = maxY - minY;
+
+  if (w <= 0 || h <= 0) return;
+
+  const sx = (width  - 2 * VIEW_MARGIN) / w;
+  const sy = (height - 2 * VIEW_MARGIN) / h;
+
+  camTargetScale = min(camTargetScale, min(sx, sy));
 }
 
-function applyCamera(b) {
+function beginCamera() {
+  camScale = lerp(camScale, camTargetScale, ZOOM_SMOOTH);
+
   push();
-
-  const w = max(1, b.maxX - b.minX);
-  const h = max(1, b.maxY - b.minY);
-  const pad = 40;
-
-  const sx = (width  - pad) / w;
-  const sy = (height - pad) / h;
-  const s  = min(sx, sy);
-
-  translate(width / 2, height / 2);
-  scale(s);
-  translate(-(b.minX + b.maxX) / 2, -(b.minY + b.maxY) / 2);
+  translate(width / 2, height - 20);
+  scale(camScale);
+  translate(-camAnchorX, -camAnchorY);
 }
 
-function drawSegments() {
-  stroke(0);
-  for (const s of segments) {
-    strokeWeight(s.w);
-    line(s.x1, s.y1, s.x2, s.y2);
-  }
+function endCamera() {
+  pop();
 }
+
 
 
 function expandNextTip(symbol) {
