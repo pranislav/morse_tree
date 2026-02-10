@@ -351,7 +351,7 @@ function handleChar(ch) {
 
     if (ch === ' ') {
         history.push(snapshot());
-        symbolQueue.push('|', '|');
+        symbolQueue.push('|');
         typedText += ' ';
     } else {
         const c = ch.toUpperCase();
