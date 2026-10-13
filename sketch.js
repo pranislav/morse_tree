@@ -12,6 +12,7 @@ let tipQueue = [];
 let symbolQueue = [];
 let typedText = "";
 let history = [];
+let characterSettings = [];
 let textDisplay;
 let ui;
 let controls;
@@ -130,6 +131,7 @@ function resetTree() {
     segments = [initialBranch];
     symbolQueue = [];
     typedText = "";
+    characterSettings = [];
     resetCamera(initialBranch.x1, initialBranch.y1);
     updateCamera();
 
@@ -206,7 +208,11 @@ function draw() {
 
   // 1. simulation step (at most one symbol)
   if (symbolQueue.length > 0) {
-    expandNextTip(symbolQueue.shift());
+    const queuedSymbol = symbolQueue.shift();
+    const currentSettings = captureParameters();
+    applyParameters(queuedSymbol.parameters);
+    expandNextTip(queuedSymbol);
+    applyParameters(currentSettings);
     updateCamera();   // ← ONLY when geometry changed
   }
 
@@ -286,6 +292,8 @@ function endCamera() {
 function expandNextTip(symbol) {
     if (tipQueue.length === 0) return;
 
+    const queueItem = symbol;
+    symbol = queueItem.symbol;
     const b = tipQueue.shift();
     const children = encodeChildren(symbol, b);
 
@@ -293,7 +301,7 @@ function expandNextTip(symbol) {
     for (const c of children) {
         if (segmentTooClose(c)) {
             // parent dies, retry symbol on next tip
-            symbolQueue.unshift(symbol);
+            symbolQueue.unshift(queueItem);
             return;
         }
     }
@@ -410,13 +418,17 @@ function handleChar(ch) {
 
     if (ch === ' ') {
         history.push(snapshot());
-        symbolQueue.push('|');
+        const parameters = captureParameters();
+        characterSettings.push(parameters);
+        symbolQueue.push({ symbol: '|', parameters });
         typedText += ' ';
     } else {
         const c = ch.toUpperCase();
         if (MORSE[c]) {
             history.push(snapshot());
-            enqueueMorse(MORSE[c]);
+            const parameters = captureParameters();
+            characterSettings.push(parameters);
+            enqueueMorse(MORSE[c], parameters);
             typedText += c;
         }
     }
@@ -441,14 +453,34 @@ function syncTextInput(value) {
         commonLength++;
     }
 
-    if (typedText.length > commonLength) {
-        rebuildTree(nextText.slice(0, commonLength));
+    if (commonLength === typedText.length) {
+        for (const ch of nextText.slice(commonLength)) handleChar(ch);
+    } else {
+        const oldText = typedText;
+        let commonSuffixLength = 0;
+        while (commonSuffixLength < oldText.length - commonLength &&
+            commonSuffixLength < nextText.length - commonLength &&
+            oldText[oldText.length - 1 - commonSuffixLength] ===
+                nextText[nextText.length - 1 - commonSuffixLength]) {
+            commonSuffixLength++;
+        }
+
+        const nextSettings = characterSettings.slice(0, commonLength);
+        const newMiddleLength = nextText.length - commonLength - commonSuffixLength;
+        const newCharacterSettings = captureParameters();
+        for (let i = 0; i < newMiddleLength; i++) {
+            nextSettings.push(newCharacterSettings);
+        }
+        if (commonSuffixLength > 0) {
+            nextSettings.push(...characterSettings.slice(oldText.length - commonSuffixLength));
+        }
+        rebuildTree(nextText, nextSettings);
     }
-    for (const ch of nextText.slice(commonLength)) handleChar(ch);
     textInput.value(typedText);
 }
 
-function rebuildTree(text) {
+function rebuildTree(text, settingsByCharacter = []) {
+    const currentSettings = captureParameters();
     const currentScale = camScale;
     const currentTargetScale = camTargetScale;
     const currentPanX = camPanX;
@@ -464,15 +496,20 @@ function rebuildTree(text) {
     camTargetPanY = currentTargetPanY;
     history = [];
 
-    for (const ch of text) {
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const parameters = settingsByCharacter[i] || currentSettings;
+        applyParameters(parameters);
         const c = ch.toUpperCase();
         if (c === ' ') {
             history.push(snapshot());
-            symbolQueue.push('|');
+            characterSettings.push(parameters);
+            symbolQueue.push({ symbol: '|', parameters });
             typedText += ' ';
         } else if (MORSE[c]) {
             history.push(snapshot());
-            enqueueMorse(MORSE[c]);
+            characterSettings.push(parameters);
+            enqueueMorse(MORSE[c], parameters);
             typedText += c;
         }
 
@@ -484,7 +521,26 @@ function rebuildTree(text) {
         }
     }
 
+    applyParameters(currentSettings);
     updateCamera();
+}
+
+function captureParameters() {
+    return {
+        branchAngle,
+        lenDecay,
+        thicknessDecay,
+        minLength: MIN_LEN,
+        minWidth: MIN_W
+    };
+}
+
+function applyParameters(parameters) {
+    branchAngle = parameters.branchAngle;
+    lenDecay = parameters.lenDecay;
+    thicknessDecay = parameters.thicknessDecay;
+    MIN_LEN = parameters.minLength;
+    MIN_W = parameters.minWidth;
 }
 
 function snapshot() {
@@ -511,9 +567,9 @@ function keyPressed() {
     }
 }
 
-function enqueueMorse(codeStr) {
-    for (const c of codeStr) symbolQueue.push(c);
-    symbolQueue.push('|');
+function enqueueMorse(codeStr, parameters = captureParameters()) {
+    for (const c of codeStr) symbolQueue.push({ symbol: c, parameters });
+    symbolQueue.push({ symbol: '|', parameters });
 }
 
 
@@ -521,7 +577,7 @@ function undoLast() {
     if (history.length === 0) return;
 
     const h = history.pop();
-    rebuildTree(h.typedText);
+    rebuildTree(h.typedText, characterSettings.slice(0, h.typedText.length));
     textInput.value(typedText);
     resizeTextInput();
 }
