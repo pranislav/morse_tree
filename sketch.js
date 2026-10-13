@@ -74,8 +74,9 @@ function setup() {
     canvas.parent(treePanel);
     makeControls();
 
-    textInput = createInput('');
+    textInput = createElement('textarea', '');
     textInput.parent(treePanel);
+    textInput.attribute('rows', '2');
     textInput.attribute('placeholder', 'Type…');
     textInput.attribute('aria-label', 'Text encoded by the tree');
     textInput.style('font-size', '18px');
@@ -488,13 +489,15 @@ function snapshot() {
 }
 
 function keyTyped() {
-    if (document.activeElement.tagName === 'INPUT') return;
+    const activeTag = document.activeElement?.tagName;
+    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
     handleChar(key);
     return false;
 }
 
 function keyPressed() {
-    if (keyCode === BACKSPACE && document.activeElement?.tagName !== 'INPUT') {
+    const activeTag = document.activeElement?.tagName;
+    if (keyCode === BACKSPACE && activeTag !== 'INPUT' && activeTag !== 'TEXTAREA') {
         undoLast();
         return false;
     }
