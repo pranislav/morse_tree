@@ -1,0 +1,41 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 12px;
+  font-family: system-ui, sans-serif;
+}
+
+main, #defaultCanvas0 {
+  max-width: 100%;
+}
+
+canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  touch-action: manipulation;
+}
+
+button, input {
+  min-height: 44px;
+  font: inherit;
+}
+
+button {
+  padding: 8px 14px;
+  touch-action: manipulation;
+}
+
+@media (max-width: 700px) {
+  body {
+    padding: 8px;
+  }
+
+  #defaultCanvas0 {
+    width: 100% !important;
+    height: auto !important;
+  }
+}

@@ -12,7 +12,6 @@ let tipQueue = [];
 let symbolQueue = [];
 let typedText = "";
 let history = [];
-let lastUndoFrame = 0;
 let textDisplay;
 let ui;
 let controls;
@@ -20,11 +19,11 @@ let canvas;
 let camScale = 1;
 let camTargetScale = 1;
 let savePNGButton, saveSVGButton;
+let undoButton;
 
 const MIN_LEN = 10.0;
 const MIN_W = 0.6;
 const MIN_CLEARANCE = 2.0;
-const UNDO_DELAY = 6; // frames
 const VIEW_MARGIN = 40;
 const ZOOM_SMOOTH = 0.08;
 
@@ -60,13 +59,19 @@ function setup() {
     makeControls();
 
     textInput = createInput('');
+    textInput.parent(ui);
     textInput.attribute('placeholder', 'Type…');
+    textInput.attribute('aria-label', 'Text encoded by the tree');
     textInput.style('font-size', '18px');
     textInput.style('width', '100%');
     textInput.input(() => {
-        const ch = textInput.value().slice(-1);
-        handleChar(ch);
+        syncTextInput(textInput.value());
     });
+
+    undoButton = createButton('Undo');
+    undoButton.parent(ui);
+    undoButton.attribute('aria-label', 'Undo the last character');
+    undoButton.mousePressed(undoLast);
 
     savePNGButton = createButton("Save PNG");
     savePNGButton.parent(ui);
@@ -158,16 +163,7 @@ function draw() {
     updateCamera();   // ← ONLY when geometry changed
   }
 
-  // 2. continuous undo
-  if (keyIsDown(BACKSPACE) && history.length > 0) {
-    if (frameCount - lastUndoFrame > UNDO_DELAY) {
-      undoLast();
-      updateCamera(); // ← geometry changed
-      lastUndoFrame = frameCount;
-    }
-  }
-
-  // 3. draw tree with camera
+  // 2. draw tree with camera
   beginCamera();
 
   stroke(0);
@@ -206,7 +202,7 @@ function updateCamera() {
   const sx = (width  - 2 * VIEW_MARGIN) / w;
   const sy = (height - 2 * VIEW_MARGIN) / h;
 
-  camTargetScale = min(camTargetScale, min(sx, sy));
+  camTargetScale = min(1, sx, sy);
 }
 
 function beginCamera() {
@@ -365,6 +361,21 @@ function handleChar(ch) {
     textInput.value(typedText);
 }
 
+// Reconcile the editable text field with the same per-character undo history
+// used by keyboard input. This also handles mobile Backspace and selections.
+function syncTextInput(value) {
+    const nextText = value.toUpperCase();
+    let commonLength = 0;
+    while (commonLength < typedText.length && commonLength < nextText.length &&
+        typedText[commonLength] === nextText[commonLength]) {
+        commonLength++;
+    }
+
+    while (typedText.length > commonLength) undoLast();
+    for (const ch of nextText.slice(commonLength)) handleChar(ch);
+    textInput.value(typedText);
+}
+
 function snapshot() {
   return {
     segments: segments.slice(),
@@ -378,6 +389,13 @@ function keyTyped() {
     if (document.activeElement.tagName === 'INPUT') return;
     handleChar(key);
     return false;
+}
+
+function keyPressed() {
+    if (keyCode === BACKSPACE && document.activeElement !== textInput?.elt) {
+        undoLast();
+        return false;
+    }
 }
 
 function enqueueMorse(codeStr) {
@@ -396,10 +414,7 @@ function undoLast() {
     typedText = h.typedText;
 
     textInput.value(typedText);
-}
-
-function touchStarted() {
-  textInput.elt.focus();
+    updateCamera();
 }
 
 function saveAsSVG() {
