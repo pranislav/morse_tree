@@ -132,7 +132,8 @@ function makeControl(label, min, max, step, value, onChange) {
 
     const caption = createSpan(label);
     const slider = createSlider(min, max, initialValue, step);
-    const input = createInput(initialValue, 'number');
+    const input = createInput(initialValue, 'text');
+    input.attribute('inputmode', 'decimal');
     onChange(initialValue);
 
     slider.input(() => {
@@ -140,13 +141,29 @@ function makeControl(label, min, max, step, value, onChange) {
         onChange(Number(slider.value()));
     });
 
-    input.input(() => {
-        const entered = Number(input.value());
+    function updateFromInput(finalize = false) {
+        const raw = input.value().trim();
+        if (!raw) {
+            if (!finalize) return;
+            input.value(min);
+            slider.value(min);
+            onChange(min);
+            return;
+        }
+
+        if (!finalize && /[.,]$/.test(raw)) return;
+
+        const entered = Number(raw.replace(',', '.'));
         const v = constrain(Number.isFinite(entered) ? entered : min, min, max);
-        input.value(v);
         slider.value(v);
         onChange(v);
-    });
+        if (finalize || !Number.isFinite(entered) || entered < min || entered > max) {
+            input.value(v);
+        }
+    }
+
+    input.input(() => updateFromInput());
+    input.changed(() => updateFromInput(true));
 
     caption.parent(row);
     slider.parent(row);
