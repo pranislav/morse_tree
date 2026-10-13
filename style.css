@@ -157,12 +157,6 @@ input[type="number"]::-webkit-outer-spin-button {
     font-size: 1.15rem;
   }
 
-  .control-row {
-    grid-template-areas:
-      "label slider"
-      "number number";
-  }
-
   .parameter-number {
     min-height: 48px;
     padding: 6px 8px;
