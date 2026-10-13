@@ -4,7 +4,7 @@
 // BFS queue: expands one tip per symbol (dot/dash/bar) (left→right)
 
 let branchAngle = 40;
-let lenDecay = 0.72;
+let lenDecay = 0.7;
 let thicknessDecay = 0.8;
 
 let segments = [];
@@ -27,7 +27,7 @@ let camTargetPanY = 0;
 let savePNGButton, saveSVGButton;
 let undoButton;
 
-let MIN_LEN = 10.0;
+let MIN_LEN = 12.0;
 let MIN_W = 0.6;
 const MIN_CLEARANCE = 2.0;
 const VIEW_MARGIN = 40;
