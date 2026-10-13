@@ -147,6 +147,11 @@ function makeControl(label, min, max, step, value, onChange) {
     const input = createInput(initialValue, 'text');
     input.class('parameter-number');
     input.attribute('inputmode', 'decimal');
+    input.elt.addEventListener('focus', () => {
+        if (!window.matchMedia('(max-width: 700px)').matches) return;
+        // Keep the complete control row, including its slider, above the mobile keyboard.
+        window.setTimeout(() => row.elt.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250);
+    });
     onChange(initialValue);
 
     slider.input(() => {
