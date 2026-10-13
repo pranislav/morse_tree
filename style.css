@@ -26,7 +26,7 @@ main, #defaultCanvas0 {
 }
 
 .side-panel {
-  flex: 0 1 240px;
+  flex: 0 1 300px;
 }
 
 .export-controls {
@@ -45,7 +45,25 @@ main, #defaultCanvas0 {
   gap: 12px;
 }
 
+.control-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-areas:
+    "label label"
+    "number slider";
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+}
+
+.control-label {
+  grid-area: label;
+}
+
 .control-slider {
+  grid-area: slider;
+  min-width: 0;
+  height: 32px;
   width: 100%;
 }
 
@@ -86,14 +104,17 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .parameter-number {
+  grid-area: number;
+  min-width: 0;
   width: 100%;
 }
 
 .tree-panel > textarea {
   width: 100%;
-  min-height: 64px;
+  min-height: 52px;
   padding: 8px;
-  resize: vertical;
+  overflow-y: hidden;
+  resize: none;
   overflow-wrap: anywhere;
   line-height: 1.4;
 }
@@ -132,38 +153,22 @@ input[type="number"]::-webkit-outer-spin-button {
     gap: 18px;
   }
 
-  .control-row {
-    display: grid !important;
-    grid-template-columns: 84px minmax(0, 1fr);
-    grid-template-areas:
-      "label label"
-      "number slider";
-    align-items: center;
-    column-gap: 14px;
-    row-gap: 6px;
-  }
-
   .control-label {
-    grid-area: label;
     font-size: 1.15rem;
   }
 
   .parameter-number {
-    grid-area: number;
-    min-width: 0;
     min-height: 48px;
     padding: 6px 8px;
     font-size: 1.15rem;
   }
 
   .control-slider {
-    grid-area: slider;
-    min-width: 0;
-    height: 32px;
+    height: 36px;
   }
 
   .tree-panel > textarea {
-    min-height: 72px;
+    min-height: 56px;
     font-size: 1.25rem !important;
   }
 

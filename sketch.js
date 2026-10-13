@@ -76,7 +76,7 @@ function setup() {
 
     textInput = createElement('textarea', '');
     textInput.parent(treePanel);
-    textInput.attribute('rows', '2');
+    textInput.attribute('rows', '1');
     textInput.attribute('placeholder', 'Type…');
     textInput.attribute('aria-label', 'Text encoded by the tree');
     textInput.style('font-size', '18px');
@@ -92,8 +92,10 @@ function setup() {
             Math.min(selectionEnd, typedText.length),
             selectionDirection
         );
+        resizeTextInput();
     });
     textInput.elt.focus({ preventScroll: true });
+    resizeTextInput();
 
     savePNGButton = createButton("Save PNG");
     savePNGButton.parent(exportControls);
@@ -135,8 +137,7 @@ function resetTree() {
 
 function makeControl(label, min, max, step, value, onChange) {
     const initialValue = Number(Number(value).toPrecision(2));
-    const row = createDiv().class('control-row').style('display', 'flex')
-        .style('flex-direction', 'column');
+    const row = createDiv().class('control-row');
 
     const caption = createSpan(label).class('control-label');
     const slider = createSlider(min, max, initialValue, step);
@@ -421,6 +422,13 @@ function handleChar(ch) {
     }
 
     textInput.value(typedText);
+    resizeTextInput();
+}
+
+function resizeTextInput() {
+    if (!textInput) return;
+    textInput.elt.style.height = 'auto';
+    textInput.elt.style.height = `${textInput.elt.scrollHeight}px`;
 }
 
 // Reconcile the editable text field with the same per-character undo history
@@ -515,6 +523,7 @@ function undoLast() {
     const h = history.pop();
     rebuildTree(h.typedText);
     textInput.value(typedText);
+    resizeTextInput();
 }
 
 function saveAsSVG() {
