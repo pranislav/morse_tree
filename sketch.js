@@ -65,7 +65,16 @@ function setup() {
     textInput.style('font-size', '18px');
     textInput.style('width', '100%');
     textInput.input(() => {
+        const inputElement = textInput.elt;
+        const selectionStart = inputElement.selectionStart;
+        const selectionEnd = inputElement.selectionEnd;
+        const selectionDirection = inputElement.selectionDirection;
         syncTextInput(textInput.value());
+        inputElement.setSelectionRange(
+            Math.min(selectionStart, typedText.length),
+            Math.min(selectionEnd, typedText.length),
+            selectionDirection
+        );
     });
 
     undoButton = createButton('Undo');
