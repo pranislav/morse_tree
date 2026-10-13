@@ -18,6 +18,12 @@ let controls;
 let canvas;
 let camScale = 1;
 let camTargetScale = 1;
+let camAnchorX = 0;
+let camAnchorY = 0;
+let camPanX = 0;
+let camPanY = 0;
+let camTargetPanX = 0;
+let camTargetPanY = 0;
 let savePNGButton, saveSVGButton;
 let undoButton;
 
@@ -116,6 +122,7 @@ function resetTree() {
     symbolQueue = [];
     typedText = "";
     resetCamera(initialBranch.x1, initialBranch.y1);
+    updateCamera();
 
 }
 
@@ -190,6 +197,10 @@ function resetCamera(anchorX, anchorY) {
   camTargetScale = 1;
   camAnchorX = anchorX;
   camAnchorY = anchorY;
+  camPanX = 0;
+  camPanY = 0;
+  camTargetPanX = 0;
+  camTargetPanY = 0;
 }
 
 function updateCamera() {
@@ -208,17 +219,29 @@ function updateCamera() {
 
   if (w <= 0 || h <= 0) return;
 
-  const sx = (width  - 2 * VIEW_MARGIN) / w;
+  const widestSide = max(camAnchorX - minX, maxX - camAnchorX);
+  const sx = (width / 2 - VIEW_MARGIN) / widestSide;
   const sy = (height - 2 * VIEW_MARGIN) / h;
 
   camTargetScale = min(1, sx, sy);
+
+  // Keep the trunk's base in its original lower position. Pan only when a
+  // branch would otherwise cross the canvas margin.
+  const top = height - 20 + (minY - camAnchorY) * camTargetScale;
+  const bottom = height - 20 + (maxY - camAnchorY) * camTargetScale;
+
+  camTargetPanX = 0;
+  camTargetPanY = top < VIEW_MARGIN ? VIEW_MARGIN - top :
+      bottom > height - 20 ? height - 20 - bottom : 0;
 }
 
 function beginCamera() {
   camScale = lerp(camScale, camTargetScale, ZOOM_SMOOTH);
+  camPanX = lerp(camPanX, camTargetPanX, ZOOM_SMOOTH);
+  camPanY = lerp(camPanY, camTargetPanY, ZOOM_SMOOTH);
 
   push();
-  translate(width / 2, height - 20);
+  translate(width / 2 + camPanX, height - 20 + camPanY);
   scale(camScale);
   translate(-camAnchorX, -camAnchorY);
 }
@@ -388,7 +411,19 @@ function syncTextInput(value) {
 }
 
 function rebuildTree(text) {
+    const currentScale = camScale;
+    const currentTargetScale = camTargetScale;
+    const currentPanX = camPanX;
+    const currentPanY = camPanY;
+    const currentTargetPanX = camTargetPanX;
+    const currentTargetPanY = camTargetPanY;
     resetTree();
+    camScale = currentScale;
+    camTargetScale = currentTargetScale;
+    camPanX = currentPanX;
+    camPanY = currentPanY;
+    camTargetPanX = currentTargetPanX;
+    camTargetPanY = currentTargetPanY;
     history = [];
 
     for (const ch of text) {
