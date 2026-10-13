@@ -15,6 +15,8 @@ let history = [];
 let textDisplay;
 let ui;
 let controls;
+let sidePanel;
+let exportControls;
 let treePanel;
 let canvas;
 let camScale = 1;
@@ -56,7 +58,9 @@ function setup() {
     textDisplay.style('margin', '8px');
 
     ui = createDiv().class('app-layout').style('display', 'flex');
-    controls = createDiv().parent(ui)
+    sidePanel = createDiv().parent(ui).class('side-panel');
+    exportControls = createDiv().parent(sidePanel).class('export-controls');
+    controls = createDiv().parent(sidePanel)
         .class('controls')
         .style('display', 'flex')
         .style('flex-direction', 'column')
@@ -90,13 +94,13 @@ function setup() {
     });
 
     savePNGButton = createButton("Save PNG");
-    savePNGButton.parent(ui);
+    savePNGButton.parent(exportControls);
     savePNGButton.mousePressed(() => {
     saveCanvas("morse_tree", "png");
     });
 
     saveSVGButton = createButton("Save SVG");
-    saveSVGButton.parent(ui);
+    saveSVGButton.parent(exportControls);
     saveSVGButton.mousePressed(() => {
     saveAsSVG();
     });

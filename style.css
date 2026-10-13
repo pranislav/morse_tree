@@ -18,8 +18,24 @@ main, #defaultCanvas0 {
   gap: 16px;
 }
 
-.controls {
+.side-panel {
   flex: 0 1 240px;
+}
+
+.export-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.export-controls button {
+  flex: 1;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .tree-panel {
@@ -64,8 +80,14 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 
   .tree-panel {
+    order: 1;
     flex-basis: 100%;
     width: 100%;
     max-width: 100%;
+  }
+
+  .side-panel {
+    order: 2;
+    flex-basis: 100%;
   }
 }
