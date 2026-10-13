@@ -15,6 +15,7 @@ let history = [];
 let textDisplay;
 let ui;
 let controls;
+let treePanel;
 let canvas;
 let camScale = 1;
 let camTargetScale = 1;
@@ -25,7 +26,6 @@ let camPanY = 0;
 let camTargetPanX = 0;
 let camTargetPanY = 0;
 let savePNGButton, saveSVGButton;
-let undoButton;
 
 let MIN_LEN = 12.0;
 let MIN_W = 0.6;
@@ -61,11 +61,15 @@ function setup() {
         .style('flex-direction', 'column')
         .style('gap', '12px');
 
-    canvas.parent(ui);
+    treePanel = createDiv().parent(ui)
+        .style('display', 'flex')
+        .style('flex-direction', 'column')
+        .style('gap', '8px');
+    canvas.parent(treePanel);
     makeControls();
 
     textInput = createInput('');
-    textInput.parent(ui);
+    textInput.parent(treePanel);
     textInput.attribute('placeholder', 'Type…');
     textInput.attribute('aria-label', 'Text encoded by the tree');
     textInput.style('font-size', '18px');
@@ -82,11 +86,6 @@ function setup() {
             selectionDirection
         );
     });
-
-    undoButton = createButton('Undo');
-    undoButton.parent(ui);
-    undoButton.attribute('aria-label', 'Undo the last character');
-    undoButton.mousePressed(undoLast);
 
     savePNGButton = createButton("Save PNG");
     savePNGButton.parent(ui);
@@ -469,7 +468,7 @@ function keyTyped() {
 }
 
 function keyPressed() {
-    if (keyCode === BACKSPACE && document.activeElement !== textInput?.elt) {
+    if (keyCode === BACKSPACE && document.activeElement?.tagName !== 'INPUT') {
         undoLast();
         return false;
     }
