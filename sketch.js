@@ -101,7 +101,7 @@ function setup() {
     savePNGButton = createButton("Save PNG");
     savePNGButton.parent(exportControls);
     savePNGButton.mousePressed(() => {
-    saveCanvas("morse_tree", "png");
+    saveCanvas(timestampedFilename(), "png");
     });
 
     saveSVGButton = createButton("Save SVG");
@@ -583,8 +583,9 @@ function undoLast() {
 }
 
 function saveAsSVG() {
+  const filename = `${timestampedFilename()}.svg`;
   // start recording SVG into a buffer
-  beginRecordSVG(this, "morse_tree.svg");
+  beginRecordSVG(this, filename);
 
   // draw the tree world exactly like on canvas
   beginCamera();  // reuse your camera transform
@@ -597,4 +598,12 @@ function saveAsSVG() {
 
   // finish and save
   endRecordSVG();
+}
+
+function timestampedFilename() {
+  const now = new Date();
+  const pad = value => String(value).padStart(2, '0');
+  const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
+      `_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  return `morse_tree_${timestamp}`;
 }
