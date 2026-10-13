@@ -371,9 +371,38 @@ function syncTextInput(value) {
         commonLength++;
     }
 
-    while (typedText.length > commonLength) undoLast();
+    if (typedText.length > commonLength) {
+        rebuildTree(nextText.slice(0, commonLength));
+    }
     for (const ch of nextText.slice(commonLength)) handleChar(ch);
     textInput.value(typedText);
+}
+
+function rebuildTree(text) {
+    resetTree();
+    history = [];
+
+    for (const ch of text) {
+        const c = ch.toUpperCase();
+        if (c === ' ') {
+            history.push(snapshot());
+            symbolQueue.push('|');
+            typedText += ' ';
+        } else if (MORSE[c]) {
+            history.push(snapshot());
+            enqueueMorse(MORSE[c]);
+            typedText += c;
+        }
+
+        // Finish each prior character before taking the next snapshot so the
+        // undo history always describes a stable, fully grown prefix.
+        let safety = 0;
+        while (symbolQueue.length > 0 && tipQueue.length > 0 && safety++ < 10000) {
+            expandNextTip(symbolQueue.shift());
+        }
+    }
+
+    updateCamera();
 }
 
 function snapshot() {
@@ -408,13 +437,8 @@ function undoLast() {
     if (history.length === 0) return;
 
     const h = history.pop();
-    segments = h.segments;
-    tipQueue = h.tipQueue;
-    symbolQueue = h.symbolQueue;
-    typedText = h.typedText;
-
+    rebuildTree(h.typedText);
     textInput.value(typedText);
-    updateCamera();
 }
 
 function saveAsSVG() {
