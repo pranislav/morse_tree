@@ -153,6 +153,12 @@ input[type="number"]::-webkit-outer-spin-button {
     gap: 18px;
   }
 
+  .controls::after {
+    content: "";
+    display: block;
+    flex: 0 0 45vh;
+  }
+
   .control-label {
     font-size: 1.15rem;
   }
