@@ -55,13 +55,15 @@ function setup() {
     textDisplay.style('font-family', 'monospace');
     textDisplay.style('margin', '8px');
 
-    ui = createDiv().style('display', 'flex');
+    ui = createDiv().class('app-layout').style('display', 'flex');
     controls = createDiv().parent(ui)
+        .class('controls')
         .style('display', 'flex')
         .style('flex-direction', 'column')
         .style('gap', '12px');
 
     treePanel = createDiv().parent(ui)
+        .class('tree-panel')
         .style('display', 'flex')
         .style('flex-direction', 'column')
         .style('gap', '8px');
