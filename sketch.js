@@ -144,6 +144,56 @@ function makeControl(label, min, max, step, value, onChange) {
     const caption = createSpan(label).class('control-label');
     const slider = createSlider(min, max, initialValue, step);
     slider.class('control-slider');
+    const range = slider.elt;
+    let touchStart = null;
+
+    // Native range inputs often claim touch drags before the page can scroll.
+    // On phones, wait for the gesture direction and handle vertical scrolling
+    // and horizontal slider movement separately.
+    range.addEventListener('touchstart', event => {
+        if (!window.matchMedia('(max-width: 700px)').matches || event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        touchStart = { x: touch.clientX, y: touch.clientY, lastY: touch.clientY, direction: null };
+        event.preventDefault();
+    }, { passive: false });
+
+    range.addEventListener('touchmove', event => {
+        if (!touchStart || event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        const dx = touch.clientX - touchStart.x;
+        const dy = touch.clientY - touchStart.y;
+        if (!touchStart.direction && Math.max(Math.abs(dx), Math.abs(dy)) > 6) {
+            touchStart.direction = Math.abs(dy) > Math.abs(dx) ? 'vertical' : 'horizontal';
+        }
+
+        if (touchStart.direction === 'vertical') {
+            window.scrollBy(0, touchStart.lastY - touch.clientY);
+            touchStart.lastY = touch.clientY;
+        } else if (touchStart.direction === 'horizontal') {
+            const bounds = range.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (touch.clientX - bounds.left) / bounds.width));
+            const raw = min + ratio * (max - min);
+            const snapped = min + Math.round((raw - min) / step) * step;
+            range.value = String(Math.max(min, Math.min(max, snapped)));
+            range.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        event.preventDefault();
+    }, { passive: false });
+
+    range.addEventListener('touchend', event => {
+        if (!touchStart) return;
+        if (!touchStart.direction) {
+            const touch = event.changedTouches[0];
+            const bounds = range.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (touch.clientX - bounds.left) / bounds.width));
+            const raw = min + ratio * (max - min);
+            const snapped = min + Math.round((raw - min) / step) * step;
+            range.value = String(Math.max(min, Math.min(max, snapped)));
+            range.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        touchStart = null;
+    }, { passive: false });
+    range.addEventListener('touchcancel', () => { touchStart = null; });
     const input = createInput(initialValue, 'text');
     input.class('parameter-number');
     input.attribute('inputmode', 'decimal');
