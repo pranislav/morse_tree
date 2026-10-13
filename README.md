@@ -1,6 +1,6 @@
 # Text to Tree Encoder
 
-A simple interactive web app that encodes text into a growing tree structure. Each letter is translated into Morse code, and the tree grows according to the sequence of dots (`.`), dashes (`-`), and bars (`|`). The tree grows dynamically as you type, and the growth can be customized via adjustable parameters.
+A simple interactive web app that encodes text into a growing tree. Each letter is translated into Morse code, and the tree grows from dots (`.`), dashes (`-`), and bars (`|`). Adjust the tree as it grows, then save it as an image.
 
 ---
 
@@ -15,46 +15,46 @@ For example, the provided `drawing.png` encodes the sentence:
 ## Features
 
 - **Dynamic Tree Growth:** Type letters or digits and watch the tree grow in real time.
-- **Undo:** Remove the last entered character(s) using backspace.
+- **Text editing:** Edit or delete characters anywhere in the text field. Backspace also undoes the last character when the canvas has focus.
 - **Morse Encoding:** Each character is translated into Morse code (`.` = left+straight, `-` = right+straight, `|` = all three branches).
 - **Adjustable Parameters:**
   - Branching angle
   - Length decay
   - Width decay
   - Minimum branch length and width
-- **Interactive Sliders and Number Inputs:** Adjust parameters precisely while observing the tree.
-- **Adaptive Canvas:** Tree is automatically scaled to fit the viewport.
+- **Adjustable controls:** Use sliders or number fields. Decimal fields accept either a dot or comma, and out-of-range values are clamped to the allowed limits.
+- **Responsive layout:** On phones, the tree and text field appear above the save and parameter controls. The canvas keeps its proportions and fits the screen width.
+- **Adaptive view:** The tree scales to fit while keeping its trunk centered and near the bottom of the canvas.
 - **Export Options:** Save the current tree as PNG or SVG.
-<!-- - **Mobile-Friendly:** Input works on touchscreen keyboards. -->
 
 ---
 
 ## How to Use
 
-1. Open `index.html` in a web browser or use github pages (pranislav.github.io/morse_tree)
-2. Start typing letters or digits. The tree grows in real time.
-3. Use **Backspace** to undo the last character(s).
-4. Adjust tree appearance using sliders or numeric inputs.
-5. Save the tree using the **PNG** or **SVG** buttons.
+1. Open `index.html` in a web browser or visit [the hosted app](https://pranislav.github.io/morse_tree).
+2. Type letters, digits, and spaces in the text field. Spaces add a bar (`|`) to the tree.
+3. Edit the text directly; deleting a character rebuilds the tree from the remaining text.
+4. Adjust the tree using the sliders or number fields.
+5. Select **Save PNG** or **Save SVG** to export the tree.
 
 ---
 
 ## Parameters
 
-| Parameter         | Description                                  | Default |
-|------------------|----------------------------------------------|---------|
-| Branch Angle      | Angle between branches                        | 40°     |
-| Length Decay      | Factor by which branch length decreases      | 0.72    |
-| Width Decay       | Factor by which branch width decreases       | 0.8     |
-| Minimum Length    | Smallest allowable branch length             | 10      |
-| Minimum Width     | Smallest allowable branch width              | 0.6     |
+| Parameter         | Range | Description | Default |
+|------------------|-------|-------------|---------|
+| Branch angle | 0–180° | Angle between branches | 40° |
+| Length decay | 0–2 | Multiplier applied to each new branch length | 0.7 |
+| Width decay | 0–2 | Multiplier applied to each new branch width | 0.8 |
+| Minimum length | 0–1 | Minimum branch length as a fraction of the trunk length | 0.1 |
+| Minimum width | 0–1 | Minimum branch width as a fraction of the trunk width | 0.1 |
 
 ---
 
 ## Input Limitations
 
 - Case-insensitive: There is no difference between uppercase and lowercase letters.
-- Only standard English letters and digits are supported.
+- Standard English letters and digits are supported.
 - Diacritics (accents, umlauts, etc.) are ignored.
 
 
