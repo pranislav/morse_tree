@@ -92,6 +92,7 @@ function setup() {
             selectionDirection
         );
     });
+    textInput.elt.focus({ preventScroll: true });
 
     savePNGButton = createButton("Save PNG");
     savePNGButton.parent(exportControls);
@@ -133,12 +134,14 @@ function resetTree() {
 
 function makeControl(label, min, max, step, value, onChange) {
     const initialValue = Number(Number(value).toPrecision(2));
-    const row = createDiv().style('display', 'flex')
+    const row = createDiv().class('control-row').style('display', 'flex')
         .style('flex-direction', 'column');
 
-    const caption = createSpan(label);
+    const caption = createSpan(label).class('control-label');
     const slider = createSlider(min, max, initialValue, step);
+    slider.class('control-slider');
     const input = createInput(initialValue, 'text');
+    input.class('parameter-number');
     input.attribute('inputmode', 'decimal');
     onChange(initialValue);
 
