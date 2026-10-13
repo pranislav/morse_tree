@@ -27,8 +27,8 @@ let camTargetPanY = 0;
 let savePNGButton, saveSVGButton;
 let undoButton;
 
-const MIN_LEN = 10.0;
-const MIN_W = 0.6;
+let MIN_LEN = 10.0;
+let MIN_W = 0.6;
 const MIN_CLEARANCE = 2.0;
 const VIEW_MARGIN = 40;
 const ZOOM_SMOOTH = 0.08;
@@ -127,12 +127,14 @@ function resetTree() {
 }
 
 function makeControl(label, min, max, step, value, onChange) {
+    const initialValue = Number(Number(value).toPrecision(2));
     const row = createDiv().style('display', 'flex')
         .style('flex-direction', 'column');
 
     const caption = createSpan(label);
-    const slider = createSlider(min, max, value, step);
-    const input = createInput(value, 'number');
+    const slider = createSlider(min, max, initialValue, step);
+    const input = createInput(initialValue, 'number');
+    onChange(initialValue);
 
     slider.input(() => {
         input.value(slider.value());
@@ -140,7 +142,9 @@ function makeControl(label, min, max, step, value, onChange) {
     });
 
     input.input(() => {
-        let v = constrain(Number(input.value()), min, max);
+        const entered = Number(input.value());
+        const v = constrain(Number.isFinite(entered) ? entered : min, min, max);
+        input.value(v);
         slider.value(v);
         onChange(v);
     });
@@ -153,20 +157,20 @@ function makeControl(label, min, max, step, value, onChange) {
 }
 
 function makeControls() {
-    makeControl('Branch angle (°)', 5, 80, 1, branchAngle,
+    makeControl('Branch angle (°)', 0, 180, 1, branchAngle,
         v => branchAngle = v).parent(controls);
 
-    makeControl('Length decay', 0.5, 0.95, 0.01, lenDecay,
+    makeControl('Length decay', 0, 2, 0.01, lenDecay,
         v => lenDecay = v).parent(controls);
 
-    makeControl('Width decay', 0.5, 0.95, 0.01, thicknessDecay,
+    makeControl('Width decay', 0, 2, 0.01, thicknessDecay,
         v => thicknessDecay = v).parent(controls);
 
-    makeControl('Min length', 2, 50, 1, MIN_LEN,
-        v => MIN_LEN = v).parent(controls);
+    makeControl('Min length (relative)', 0, 1, 0.0001, MIN_LEN / initialBranch.len,
+        v => MIN_LEN = v * initialBranch.len).parent(controls);
 
-    makeControl('Min width', 0.1, 5, 0.1, MIN_W,
-        v => MIN_W = v).parent(controls);
+    makeControl('Min width (relative)', 0, 1, 0.001, MIN_W / initialBranch.w,
+        v => MIN_W = v * initialBranch.w).parent(controls);
 }
 
 
