@@ -515,6 +515,34 @@ function resizeTextInput() {
     if (!textInput) return;
     textInput.elt.style.height = 'auto';
     textInput.elt.style.height = `${textInput.elt.scrollHeight}px`;
+    resizeCanvasToFitDesktop();
+}
+
+function resizeCanvasToFitDesktop() {
+    if (!canvas || !treePanel || !textInput) return;
+    if (window.innerWidth <= 700) {
+        textInput.elt.style.width = '100%';
+        return;
+    }
+
+    const availableWidth = treePanel.elt.clientWidth;
+    const textHeight = textInput.elt.getBoundingClientRect().height;
+    const verticalSpace = window.innerHeight - 24 - textHeight - 8;
+    const fittedWidth = Math.floor(Math.min(availableWidth, verticalSpace * 7 / 5));
+    if (fittedWidth < 1) return;
+
+    const fittedHeight = Math.floor(fittedWidth * 5 / 7);
+    canvas.elt.style.width = `${fittedWidth}px`;
+    canvas.elt.style.height = `${fittedHeight}px`;
+    textInput.elt.style.width = `${fittedWidth}px`;
+    if (width !== fittedWidth || height !== fittedHeight) {
+        resizeCanvas(fittedWidth, fittedHeight);
+        updateCamera();
+    }
+}
+
+function windowResized() {
+    resizeCanvasToFitDesktop();
 }
 
 // Reconcile the editable text field with the same per-character undo history
