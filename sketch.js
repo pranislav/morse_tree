@@ -333,7 +333,8 @@ function updateCamera() {
   const sx = (width / 2 - VIEW_MARGIN) / widestSide;
   const sy = (height - 2 * VIEW_MARGIN) / h;
 
-  camTargetScale = min(1, sx, sy);
+  const maxScale = window.innerWidth > 700 ? height / (3 * initialBranch.len) : 1;
+  camTargetScale = min(maxScale, sx, sy);
 
   // Keep the trunk's base in its original lower position. Pan only when a
   // branch would otherwise cross the canvas margin.
@@ -545,15 +546,9 @@ function resizeCanvasToFitDesktop() {
 function resizeEmptyDesktopTrunk() {
     if (!initialBranch || segments.length !== 1 || typedText || symbolQueue.length > 0) return;
 
-    const minLengthRatio = MIN_LEN / initialBranch.len;
-    const trunkLength = height / 3;
-    initialBranch.x1 = width / 2;
-    initialBranch.x2 = width / 2;
-    initialBranch.y1 = height;
-    initialBranch.y2 = height - trunkLength;
-    initialBranch.len = trunkLength;
-    MIN_LEN = trunkLength * minLengthRatio;
     resetCamera(initialBranch.x1, initialBranch.y1);
+    camScale = height / (3 * initialBranch.len);
+    camTargetScale = camScale;
 }
 
 function windowResized() {
