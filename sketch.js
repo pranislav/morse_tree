@@ -30,6 +30,7 @@ let camPanY = 0;
 let camTargetPanX = 0;
 let camTargetPanY = 0;
 let savePNGButton, saveSVGButton;
+let aboutButton;
 
 let MIN_LEN = 12.0;
 let MIN_W = 0.6;
@@ -113,6 +114,12 @@ function setup() {
     saveSVGButton.parent(exportControls);
     saveSVGButton.mousePressed(() => {
     saveAsSVG();
+    });
+
+    aboutButton = createButton("About");
+    aboutButton.parent(exportControls);
+    aboutButton.mousePressed(() => {
+        window.open('https://github.com/pranislav/morse_tree', '_blank', 'noopener');
     });
 
     savePNGButton.style('height', '2rem');  // adjust as needed
