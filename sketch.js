@@ -74,7 +74,8 @@ function setup() {
         .style('display', 'flex')
         .style('flex-direction', 'column')
         .style('gap', '8px');
-    canvas.parent(treePanel);
+    const canvasWrap = createDiv().parent(treePanel).class('canvas-wrap');
+    canvas.parent(canvasWrap);
     makeControls();
 
     textInput = createElement('textarea', '');
@@ -84,10 +85,9 @@ function setup() {
     textInput.attribute('aria-label', 'Text encoded by the tree');
     textInput.style('font-size', '18px');
     textInput.style('width', '100%');
-    inputMessage = createDiv('').parent(treePanel);
+    inputMessage = createDiv('').parent(canvasWrap).class('input-message');
     inputMessage.attribute('role', 'status');
     inputMessage.attribute('aria-live', 'polite');
-    inputMessage.style('color', '#a00');
     textInput.input(() => {
         const inputElement = textInput.elt;
         const selectionStart = inputElement.selectionStart;
