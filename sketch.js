@@ -537,8 +537,23 @@ function resizeCanvasToFitDesktop() {
     textInput.elt.style.width = `${fittedWidth}px`;
     if (width !== fittedWidth || height !== fittedHeight) {
         resizeCanvas(fittedWidth, fittedHeight);
+        resizeEmptyDesktopTrunk();
         updateCamera();
     }
+}
+
+function resizeEmptyDesktopTrunk() {
+    if (!initialBranch || segments.length !== 1 || typedText || symbolQueue.length > 0) return;
+
+    const minLengthRatio = MIN_LEN / initialBranch.len;
+    const trunkLength = height / 3;
+    initialBranch.x1 = width / 2;
+    initialBranch.x2 = width / 2;
+    initialBranch.y1 = height;
+    initialBranch.y2 = height - trunkLength;
+    initialBranch.len = trunkLength;
+    MIN_LEN = trunkLength * minLengthRatio;
+    resetCamera(initialBranch.x1, initialBranch.y1);
 }
 
 function windowResized() {
