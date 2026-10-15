@@ -104,6 +104,17 @@ function setup() {
     textInput.elt.focus({ preventScroll: true });
     resizeTextInput();
 
+    // Type-to-focus: printable keys and Backspace pressed outside a text field
+    // (e.g. after moving a slider or clicking a button) go to the text field.
+    // Focus moves during keydown, so the key's default action lands there.
+    document.addEventListener('keydown', event => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.length !== 1 && event.key !== 'Backspace') return;
+        const active = document.activeElement;
+        if (active === textInput.elt || active?.classList.contains('parameter-number')) return;
+        textInput.elt.focus({ preventScroll: true });
+    });
+
     savePNGButton = createButton("Save PNG");
     savePNGButton.parent(exportControls);
     savePNGButton.mousePressed(() => {
