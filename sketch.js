@@ -14,6 +14,7 @@ let typedText = "";
 let history = [];
 let characterSettings = [];
 let textDisplay;
+let inputMessage;
 let ui;
 let controls;
 let sidePanel;
@@ -82,6 +83,10 @@ function setup() {
     textInput.attribute('aria-label', 'Text encoded by the tree');
     textInput.style('font-size', '18px');
     textInput.style('width', '100%');
+    inputMessage = createDiv('').parent(treePanel);
+    inputMessage.attribute('role', 'status');
+    inputMessage.attribute('aria-live', 'polite');
+    inputMessage.style('color', '#a00');
     textInput.input(() => {
         const inputElement = textInput.elt;
         const selectionStart = inputElement.selectionStart;
@@ -264,6 +269,17 @@ function draw() {
     expandNextTip(queuedSymbol);
     applyParameters(currentSettings);
     updateCamera();   // ← ONLY when geometry changed
+  }
+
+  // A symbol that collides is retried on later tips. If all tips are gone,
+  // the newest character could not be represented; remove it from both views.
+  if (symbolQueue.length > 0 && tipQueue.length === 0) {
+    const rejectedText = typedText.slice(0, -1);
+    const rejectedSettings = characterSettings.slice(0, -1);
+    inputMessage.html('The letter cannot be added with these settings. Try different parameter settings.');
+    rebuildTree(rejectedText, rejectedSettings);
+    textInput.value(typedText);
+    resizeTextInput();
   }
 
   // 2. draw tree with camera
@@ -465,6 +481,7 @@ function segmentSegmentDistance(x1, y1, x2, y2, x3, y3, x4, y4) {
 
 
 function handleChar(ch) {
+    if (inputMessage) inputMessage.html('');
 
     if (ch === ' ') {
         history.push(snapshot());
@@ -496,6 +513,7 @@ function resizeTextInput() {
 // Reconcile the editable text field with the same per-character undo history
 // used by keyboard input. This also handles mobile Backspace and selections.
 function syncTextInput(value) {
+    if (inputMessage) inputMessage.html('');
     const nextText = value.toUpperCase();
     let commonLength = 0;
     while (commonLength < typedText.length && commonLength < nextText.length &&
